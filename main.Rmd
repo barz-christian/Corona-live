@@ -5,6 +5,7 @@ output:
     storyboard: true
     social: menu
     self_contained: false
+    keep_md: true
     includes:
       in_header: ga_script.html
 ---
