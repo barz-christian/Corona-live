@@ -1,0 +1,101 @@
+### **Deutschlandkarte**: Fallzahlen pro Bundesland. <br> Die Farbabstufungen ergeben sich durch die Fallzahl pro 100.000 Einwohner.
+
+```{r, include=FALSE}
+#### libraries
+library(pacman)
+p_load(tidyverse,
+       flexdashboard,
+       leaflet,  
+       leaflet.extras, 
+       knitr, 
+       sf)
+
+#### load global parameters/ user defined functions
+source("helpers.R")
+```
+
+```{r ,include=FALSE}
+#### data preparation
+df = st_read("./data/latest_bundesleander.geojson", stringsAsFactors = FALSE)
+
+if (use_mapshaper){
+  df = df %>%
+     rmapshaper::ms_simplify(keep = 0.1, sys = TRUE)
+}
+
+df <- df %>%
+  mutate(rel_count = round((anzahl / population) * 100 * 1000, 2)) %>%
+  select(Name = GEN, 
+         Infizierte = anzahl, 
+         "pro 100 000 Einw." = rel_count, 
+         Art = BEZ,
+         Einwohner = population, 
+         Bundesland , Stand = stand)
+
+#### local parameters
+RKI_stand <-  df %>% 
+    st_drop_geometry() %>%
+    filter(Bundesland == "Berlin") %>%
+    mutate(Stand=format(Stand,format='%d.%m.%Y %H:%M')) %>%
+    pull(Stand) %>%
+    max()
+
+```
+
+
+```{r Bundeslandkarte, echo=FALSE}
+# generate labels which will be shown on mouse hover
+df_label <- generate_labels(df)
+
+# generate 4 bins, used to color the map (colorQuantile function produces a bad legend)
+bins <- quantile(df$`pro 100 000 Einw.`) %>% as.numeric() %>% round(digits = 2)
+# generate palette function to color the bins
+pal <- colorBin(palette = palette, domain = df$`  pro 100 000 Einw.`, bins = bins, na.color = "#808080")
+
+
+leaflet(df) %>%
+  # choose map layout
+  addProviderTiles(providers$CartoDB.Positron, group = "Light map") %>%
+  addPolygons(
+    # color region by palette function
+    fillColor = ~pal(`pro 100 000 Einw.`),
+    weight = 2,
+    opacity = 1,  
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    # hightlight boarder of region on mouse hover
+    highlight = highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),  
+    # add labels shown on mouse hover
+    label = df_label,
+    # formating the labels
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "13px",
+      direction = "auto")
+  ) %>%
+  # add legend
+  addLegend(pal = pal, values = ~`pro 100 000 Einw.`, opacity = 0.7, title = "pro 100000 Einw.",
+            position = "topright") %>%
+  addFullscreenControl()
+```
+
+***
+
+Datenquelle für die **Deutschlandkarte** ist das  <a href="https://www.rki.de">Robert-Koch-Institut</a> (RKI). 
+Letzte Aktualisierung des RKI: `r RKI_stand`
+
+Das Robert-Koch-Institut veröffentlicht i.dR. einmal pro Tag am Abend neue Zahlen. 
+
+*Durch zeitliche Unterschiede in der Veröffentlichung des RKI und der Landesbehörden kann es zu unterschiedlichen Gesamtzahlen der Bundesländer in Karten kommen.*
+
+<a href="https://twitter.com/palaimon_io">Twitter</a>: Aktualisierungen unter #CoronaLiveDE
+Fragen und Anmerkungen zu www.corona-live.de? Twittern Sie uns.
+
+##### corona-live.de ist ein nicht-kommerzielles Projekt der <a href="https://palaimon.io/">Palaimon GmbH</a>
+

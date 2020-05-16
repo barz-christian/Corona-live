@@ -1,0 +1,102 @@
+### **RKI/ESRI Landkreise** 
+
+```{r ,include=FALSE}
+#### libraries
+library(pacman)
+p_load(tidyverse,
+       flexdashboard,
+       leaflet,  
+       leaflet.extras, 
+       knitr, 
+       sf)
+
+#### load global parameters/ user defined functions
+source("helpers.R")
+
+```
+
+```{r, include=FALSE}
+#### data preparation
+df <- st_read('./data/latest_rki_landkreise.geojson', stringsAsFactors = FALSE)
+
+if(use_mapshaper){
+  df <- df %>%
+     rmapshaper::ms_simplify(keep = 0.02, sys = TRUE)
+}
+
+df <- df %>%
+  mutate(cases_per_100k = round(cases_per_100k, digits = 2)) %>%
+  select(Name = GEN, 
+         Infizierte = cases, 
+         'pro 100000 Einw.' = cases_per_100k, 
+         Tote = deaths, 
+         Art = BEZ, 
+         Bundesland = BL,
+         Einwohner = EWZ)
+```
+
+```{r kreiskarte, echo=FALSE}
+# generate labels which will be shown on mouse hover
+df_label <- generate_labels(df)
+
+# generate 4 bins, used to color the map
+bins <- quantile(df$`pro 100000 Einw.`) %>% as.numeric() %>% round(digits = 2)
+
+pal <- colorBin(palette = palette, domain = df$`pro 100000 Einw.`, bins = bins, na.color = "#808080")
+
+
+leaflet(df) %>%
+  # choose map layout
+  addProviderTiles(providers$CartoDB.Positron, group = "Light map") %>%
+  addPolygons(
+    # color region by palette function
+    fillColor = ~pal(`pro 100000 Einw.`),
+    weight = 2,
+    opacity = 1,  
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    # hightlight boarder of region on mouse hover
+    highlight = highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),  
+    # add labels shown on mouse hover
+    label = df_label,
+    # formating the labels
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "13px",
+      direction = "auto")
+  ) %>%
+  # add legend
+  addLegend(pal = pal, values = ~`pro 100000 Einw.`, opacity = 0.7, title = 'pro 100000 Einw.',
+            position = "topright") %>%
+  addFullscreenControl()
+ 
+```
+
+***
+
+##### Das RKI stellt seine Regionaldaten der Firma ESRI bereit, die diese wiederum der Öffentlichkeit bereitstellt.
+
+
+Da diese Daten teilweise bis zu 3 Tagen Verzögerung haben ([Download Link](https://npgeo-corona-npgeo-de.hub.arcgis.com/search?groupIds=b28109b18022405bb965c602b13e1bbc))
+sind die hier dargestellten Zahlen unter den aktuellen Zahlen.
+
+ESRI stellt diese Daten auch in einem Dashboard [Link](https://experience.arcgis.com/experience/478220a4c454480e823b17327b2bf1d4/page/page_1/) zu Verfuegung.
+
+<h2><b>Infizierte `r format(sum(df$Infizierte), big.mark=" ") `</b></h2>
+<h4><b>Verstorbene `r sum(df$Tote)`</b></h4>
+
+```{r, echo=FALSE}
+kable(df %>%
+        st_drop_geometry() %>%
+        group_by(Bundesland) %>%
+        summarise(Infizierte = sum(Infizierte), Tote = sum(Tote), Einwohner = sum(Einwohner)) %>%
+        ungroup() %>%
+        arrange(Bundesland)
+      , caption = "Fallzahlen", format.args=list(big.mark = ' '))
+```

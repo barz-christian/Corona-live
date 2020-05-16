@@ -1,0 +1,127 @@
+### **Regionalkarte**: Fallzahlen pro Stadt- und Landkreis. <br> Die Farbabstufungen ergeben sich durch die Fallzahl pro 100.000 Einwohner. 
+
+```{r, include=FALSE}
+#### libraries
+library(pacman)
+p_load(tidyverse,
+       flexdashboard,
+       leaflet,  
+       leaflet.extras, 
+       knitr, 
+       sf)
+#### load global parameters/ user defined functions
+source("helpers.R")
+```
+
+```{r ,include=FALSE}
+#### data preparation
+df <- st_read('./data/corona_live.geojson', stringsAsFactors = FALSE)
+if (use_mapshaper){df <- df %>% rmapshaper::ms_simplify(keep = 0.1, sys = TRUE)}
+
+df <- df %>%
+  mutate(rel_count = round((anzahl / population) * 100 * 1000, 2)) %>%
+  select(Name = GEN, Infizierte = anzahl,  "pro 100 000 Einw." = rel_count, Art = BEZ, Einwohner = population, Bundesland , Stand = stand, Inzidenz = rel_count)
+
+#### local parameters
+RKI_stand <-  df %>%
+   # st_drop_geometry() %>%
+    filter(Bundesland == "Berlin") %>%
+    mutate(Stand=format(Stand,format='%d.%m.%Y %H:%M')) %>%
+    pull(Stand) %>%
+    max()
+```
+
+
+```{r Regionalkarte, echo=FALSE}
+# generate labels which will be shown on mouse hover
+df_label <- generate_labels(df %>% select(-Inzidenz))
+
+# generate palette function to color map
+bins <- quantile(df$`pro 100 000 Einw.`) %>% as.numeric() %>% round(digits = 2)
+pal <- colorBin(palette = palette, domain = df$`  pro 100 000 Einw.`, bins = bins, na.color = "#808080")
+
+# data preparation to create layers
+Bundeslaender <- unique(df$Bundesland) %>% 
+  sort()
+df_list <- lapply(Bundeslaender, function(x){filter(df, Bundesland == x)}) %>%
+  purrr::set_names(Bundeslaender)
+
+# create map
+map <- leaflet(df) %>%
+  # choose map layout
+  addProviderTiles(providers$CartoDB.Positron, group = "Light map") 
+for(i in Bundeslaender){
+  map <- map %>%
+    addPolygons(
+      # create group
+      data = df_list[[i]], group = i,
+      # color region by palette function
+      fillColor = ~pal(Inzidenz),
+      weight = 2,
+      opacity = 1,  
+      color = "white",
+      dashArray = "3",
+      fillOpacity = 0.7,
+      # hightlight boarder of region on mouse hover
+      highlight = highlightOptions(
+        weight = 5,
+        color = "#666",
+        dashArray = "",
+        fillOpacity = 0.7,
+        bringToFront = TRUE),  
+      # add labels shown on mouse hover
+      label = df_label,
+      # formating the labels
+      labelOptions = labelOptions(
+        style = list("font-weight" = "normal", padding = "3px 8px"),
+        textsize = "13px",
+        direction = "auto")
+      )
+}
+
+map <- map %>%
+  # add control for layers
+    addLayersControl(
+      overlayGroups = Bundeslaender,
+      options = layersControlOptions(collapsed = TRUE),
+      position = "topleft"
+      ) %>%
+  # add legend
+  addLegend(pal = pal, values = ~Inzidenz, opacity = 0.7, title = 'pro 100000 Einw.',
+            position = "topright") %>%
+  addFullscreenControl() 
+
+map
+
+```
+
+***
+
+##### Datenquellen für die **Regionalkarte** sind die jeweiligen Landesbehörden und das RKI. 
+
+<h2><b>Infizierte `r format(sum(df$Infizierte), big.mark=" ") `</b></h2>
+
+Quellen: **Landesbehörden**
+
+```{r Fallzahlentabelle pro Bundesland, echo=FALSE}
+df %>% 
+  st_drop_geometry() %>% 
+  group_by(Bundesland) %>%
+  summarise(Infizierte=sum(Infizierte) %>% format(big.mark=" "), Einwohner=sum(Einwohner), Stand=min(Stand)) %>%
+  ungroup() %>%
+  select(Bundesland, Infizierte, Stand) %>%
+  arrange(Bundesland) %>%
+  kable(caption = "Fallzahlen")
+```
+
+*Da die Landesbehörden zu unterschiedlichen Tageszeiten ihre Zahlen aktualisieren, gibt es mehrfach täglich Aktualisierungen der Karte.*
+
+Quelle: **RKI**
+
+Die Zahlen der Bundesländer Berlin, Hamburg und Bremen sind jeweils aggregiert auf Bundeslandebene dargstellt. Die Datenquelle hierfür ist das <a href="https://www.rki.de">Robert-Koch-Institut</a> (RKI)  Stand vom: `r RKI_stand`
+
+
+<a href="https://twitter.com/palaimon_io">Twitter</a>: Aktualisierungen unter #CoronaLiveDE
+Fragen und Anmerkungen zu www.corona-live.de? Twittern Sie uns.
+
+##### corona-live.de ist ein nicht-kommerzielles Projekt der Palaimon GmbH (https://palaimon.io/)

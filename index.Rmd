@@ -1,0 +1,15 @@
+### Aktualisierung der Karten wurde zum 31.03.20 eingestellt.
+
+Liebe Besucher,
+
+nachdem wir Ihnen und Euch hier vom 12.03.20 an für 20 Tage die erste täglich mehrfach aktualisierte Landkreiskarte für Deutschland zur Verfügung gestellt haben, müssen wir unseren Service leider einstellen.
+
+Euer Feedback hat uns gezeigt, dass es ein Mehrwert war die Daten zum Zeitpunkt der jeweiligen regionalen Veröffentlichung direkt zu sehen und damit teilweise bis 24 Stunden aktuellere regionale Falldaten zu erhalten, als im offziellen RKI/ESRI Dashboard. (Notiz: Der RKI Stand repräsentiert den sehr wichtigen, zeitlichen einheitlichen Stand Deutschlands). Durch die Verzögerung innerhalb des offiziellen Meldewegs, lagen die hier gezeigten regionalen Tageszahlen teilweise bis zu 30% über dem jeweils aktuellen RKI Stand. 
+
+Die von uns innerhalb einer Wochenendaktion programmierte automatisierte Datenbereitstellung auf dieser Karte erforderte täglich manuelle Eingriffe aufgrund einer sehr dynamischen Datenbereitstellung der Länder, die sich leider auch nicht stabilisiert hat. Den alleinigen Maintenance- und Qualitätssicherungsaufwand von mehreren Stunden pro Tag (bspw. durch nicht-standardisierten und täglich neuen HMTL-Code der Länder-Websites, durch manuelle Pflege bedingte wechselnde Ortsschreibweisen und andere Dateninkonsistenzen) können wir aktuell leider nicht weiter leisten.
+
+Da wir ohne den beschriebenen Aufwand die von uns gesetzten Standards an die Datenqualität nicht sicherstellen können, haben wir die schwere Entscheidung getroffen, den Service einzustellen.
+
+Bleiben Sie gesund!
+
+Ihr Palaimon-Team

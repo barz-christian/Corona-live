@@ -1,0 +1,57 @@
+### **Regionaltabelle:** Fallzahlen pro Stadt- und Landkreis
+
+```{r, include=FALSE}
+#### libraries
+library(pacman)
+p_load(tidyverse,
+       DT,
+       sf)
+```
+```{r ,include=FALSE}
+#### data preparation
+df <- st_read('./data/corona_live.geojson', stringsAsFactors = FALSE)
+
+df <- df %>%
+  mutate(rel_count = round((anzahl / population) * 100 * 1000, 2)) %>%
+  select(Name = GEN, Infizierte = anzahl,  "pro 100 000 Einw." = rel_count, Art = BEZ, Einwohner = population,
+         Bundesland, Stand = stand)
+
+#### local parameters
+RKI_stand <-  df %>%
+    st_drop_geometry() %>%
+    filter(Bundesland == "Berlin") %>%
+    mutate(Stand=format(Stand,format='%d.%m.%Y %H:%M')) %>%
+    pull(Stand) %>%
+    max()
+```
+
+
+```{r ,echo=FALSE}
+
+options(DT.options = list(pageLength = 25, language = list(search = 'Suche:', lengthMenu= "_MENU_ Einträge anzeigen"))) # manually change language
+
+df %>%
+  st_drop_geometry() %>%
+  mutate_at(.vars = vars("Bundesland"), as.factor) %>%
+  DT::datatable(filter = "top", rownames = FALSE)
+```
+
+***
+
+##### Datenquellen für die **Regionaltabelle** sind die jeweiligen Landesbehörden und das RKI. 
+
+<h2><b>Infizierte `r format(sum(df$Infizierte), big.mark=" ") `</b></h2>
+
+Quellen: **Landesbehörden**
+
+*Da die Landesbehörden zu unterschiedlichen Tageszeiten ihre Zahlen aktualisieren, gibt es mehrfach täglich Aktualisierungen der Karte.*
+
+Quelle: **RKI**
+
+Die Zahlen der Bundesländer Berlin, Hamburg und Bremen sind jeweils aggregiert auf Bundeslandebene dargstellt. Die Datenquelle hierfür ist das <a href="https://www.rki.de">Robert-Koch-Institut</a> (RKI)  Stand vom: `r RKI_stand`
+
+
+<a href="https://twitter.com/palaimon_io">Twitter</a>: Aktualisierungen unter #CoronaLiveDE
+Fragen und Anmerkungen zu www.corona-live.de? Twittern Sie uns.
+
+##### corona-live.de ist ein nicht-kommerzielles Projekt der Palaimon GmbH (https://palaimon.io/)

@@ -1,0 +1,31 @@
+---
+title: "COVID-19 Deutschlands aktuellste Karten #CoronaLiveDE"
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
+    social: menu
+    self_contained: false
+    includes:
+      in_header: ga_script.html
+---
+
+```{r setup, include=FALSE}
+library(pacman)
+p_load(flexdashboard)
+
+```
+
+```{r stopped maintanance, child = "index.Rmd"}
+```
+
+```{r regional map, child = "regional_chart.Rmd"}
+```
+
+```{r regional table, child = "regional_table.Rmd"}
+```
+
+```{r germany map, child = "germany_chart.Rmd"}
+```
+
+```{r RKI/ESRI, child = "RKI_ESRI_chart.Rmd"}
+```
