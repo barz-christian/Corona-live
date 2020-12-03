@@ -8,6 +8,8 @@ p_load(tidyverse,
        leaflet,  
        leaflet.extras, 
        knitr, 
+       rmapshaper,
+       leaflet.providers,
        sf)
 #### load global parameters/ user defined functions
 source("helpers.R")
@@ -16,6 +18,7 @@ source("helpers.R")
 ```{r ,include=FALSE}
 #### data preparation
 df <- st_read('./data/corona_live.geojson', stringsAsFactors = FALSE)
+
 if (use_mapshaper){df <- df %>% rmapshaper::ms_simplify(keep = 0.1, sys = TRUE)}
 
 df <- df %>%

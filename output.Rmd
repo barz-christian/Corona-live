@@ -1,0 +1,27 @@
+---
+title: "Corona-live"
+author: "Christian Barz"
+date: "`r lubridate::today()`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(pacman)
+p_load(flexdashboard)
+
+```
+
+```{r stopped maintanance, child = "index.Rmd"}
+```
+
+```{r regional map, child = "regional_chart.Rmd"}
+```
+
+```{r regional table, child = "regional_table.Rmd"}
+```
+
+```{r germany map, child = "germany_chart.Rmd"}
+```
+
+```{r RKI/ESRI, child = "RKI_ESRI_chart.Rmd"}
+```
